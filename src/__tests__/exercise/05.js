@@ -8,6 +8,7 @@ import {build, fake} from '@jackfranklin/test-data-bot'
 import {rest} from 'msw'
 import {setupServer} from 'msw/node'
 import Login from '../../components/login-submission'
+import {handlers} from 'test/server-handlers'
 
 const buildLoginForm = build({
   fields: {
@@ -16,17 +17,51 @@ const buildLoginForm = build({
   },
 })
 
-const server = setupServer(
-  rest.post(
-    'https://auth-provider.example.com/api/login',
-    async (req, res, ctx) => {
-      return res(ctx.json({username: req.body.username}))
-    },
-  )
-)
+const server = setupServer(...handlers)
 
 beforeAll(() => server.listen())
+afterEach(() => server.resetHandlers())
 afterAll(() => server.close())
+
+test(`logging failure displays error message`, async () => {
+  render(<Login />)
+  const {username} = buildLoginForm()
+
+  userEvent.type(screen.getByLabelText(/username/i), username)
+
+  userEvent.click(screen.getByRole('button', {name: /submit/i}))
+
+  await waitForElementToBeRemoved(() => screen.getByLabelText(/loading/i))
+
+  expect(screen.getByRole('alert').textContent).toMatchInlineSnapshot(
+    `"password required"`,
+  )
+
+})
+
+test(`server failure displays error message`, async () => {
+  server.use(
+    rest.post(
+      'https://auth-provider.example.com/api/login',
+      async (req, res, ctx) => {
+        return res(ctx.status(400), ctx.json({message: 'unexpected error'}))
+      },
+    ),
+  )
+
+  render(<Login />)
+  const {username} = buildLoginForm()
+
+  userEvent.type(screen.getByLabelText(/username/i), username)
+
+  userEvent.click(screen.getByRole('button', {name: /submit/i}))
+
+  await waitForElementToBeRemoved(() => screen.getByLabelText(/loading/i))
+
+  expect(screen.getByRole('alert').textContent).toMatchInlineSnapshot(
+    `"unexpected error"`,
+  )
+})
 
 test(`logging in displays the user's username`, async () => {
   render(<Login />)
@@ -36,9 +71,9 @@ test(`logging in displays the user's username`, async () => {
   userEvent.type(screen.getByLabelText(/password/i), password)
 
   userEvent.click(screen.getByRole('button', {name: /submit/i}))
-  
+
   await waitForElementToBeRemoved(() => screen.getByLabelText(/loading/i))
 
   expect(screen.getByText(username)).toBeDefined()
-
 })
+
