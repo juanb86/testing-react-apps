@@ -11,8 +11,30 @@ import useCounter from '../../components/use-counter'
 // capabilities of this hook
 // 💰 here's how to use the hook:
 // const {count, increment, decrement} = useCounter()
+function Counter() {
+  const {count, increment, decrement} = useCounter()
+
+  return (
+    <div>
+      <div>Counter: {count}</div>
+      <button onClick={decrement}>Decrement</button>
+      <button onClick={increment}>Increment</button>
+    </div>
+  )
+}
 
 test('exposes the count and increment/decrement functions', () => {
+  render(<Counter />)
+
+  const currentCount = screen.getByText(/counter/i)
+
+  expect(currentCount).toHaveTextContent('0')
+
+  userEvent.click(screen.getByRole('button', {name: /increment/i}))
+  expect(currentCount).toHaveTextContent('1')
+
+  userEvent.click(screen.getByRole('button', {name: /decrement/i}))
+  expect(currentCount).toHaveTextContent('0')
   // 🐨 render the component
   // 🐨 get the elements you need using screen
   // 🐨 assert on the initial state of the hook
