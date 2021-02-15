@@ -36,15 +36,15 @@ test(`logging failure displays error message`, async () => {
   expect(screen.getByRole('alert').textContent).toMatchInlineSnapshot(
     `"password required"`,
   )
-
 })
 
 test(`server failure displays error message`, async () => {
+  const unexpectedErrorMessage = 'Something wrong happend'
   server.use(
     rest.post(
       'https://auth-provider.example.com/api/login',
       async (req, res, ctx) => {
-        return res(ctx.status(400), ctx.json({message: 'unexpected error'}))
+        return res(ctx.status(400), ctx.json({message: unexpectedErrorMessage}))
       },
     ),
   )
@@ -58,9 +58,7 @@ test(`server failure displays error message`, async () => {
 
   await waitForElementToBeRemoved(() => screen.getByLabelText(/loading/i))
 
-  expect(screen.getByRole('alert').textContent).toMatchInlineSnapshot(
-    `"unexpected error"`,
-  )
+  expect(screen.getByRole('alert')).toHaveTextContent(unexpectedErrorMessage)
 })
 
 test(`logging in displays the user's username`, async () => {
@@ -76,4 +74,3 @@ test(`logging in displays the user's username`, async () => {
 
   expect(screen.getByText(username)).toBeDefined()
 })
-

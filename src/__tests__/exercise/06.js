@@ -6,6 +6,11 @@ import {render, screen, act} from '@testing-library/react'
 import Location from '../../examples/location'
 
 // 🐨 set window.navigator.geolocation to an object that has a getCurrentPosition mock function
+beforeAll(() => {
+  window.navigator.geolocation = {
+    getCurrentPosition: jest.fn(),
+  }
+})
 
 // 💰 I'm going to give you this handy utility function
 // it allows you to create a promise that you can resolve/reject on demand.
@@ -28,9 +33,13 @@ function deferred() {
 test('displays the users current location', async () => {
   // 🐨 create a fakePosition object that has an object called "coords" with latitude and longitude
   // 📜 https://developer.mozilla.org/en-US/docs/Web/API/GeolocationPosition
-  //
+  const fakePosition = {
+    position: {coords: {latitude: -32.4018106, longitude: -59.7833593}},
+  }
+
   // 🐨 create a deferred promise here
-  //
+  const {promise, resolve, reject} = deferred()
+
   // 🐨 Now we need to mock the geolocation's getCurrentPosition function
   // To mock something you need to know its API and simulate that in your mock:
   // 📜 https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/getCurrentPosition
@@ -39,17 +48,24 @@ test('displays the users current location', async () => {
   // function success(position) {}
   // function error(error) {}
   // navigator.geolocation.getCurrentPosition(success, error)
-  //
+  window.navigator.geolocation.getCurrentPosition.mockImplementation(
+    (success, error) => {
+      return success(fakePosition)
+    },
+  )
+
   // 🐨 so call mockImplementation on getCurrentPosition
   // 🐨 the first argument of your mock should accept a callback
   // 🐨 you'll call the callback when the deferred promise resolves
   // 💰 promise.then(() => {/* call the callback with the fake position */})
   //
   // 🐨 now that setup is done, render the Location component itself
-  //
+  render(<Location />)
+
   // 🐨 verify the loading spinner is showing up
   // 💰 tip: try running screen.debug() to know what the DOM looks like at this point.
-  //
+  screen.debug()
+
   // 🐨 resolve the deferred promise
   // 🐨 wait for the promise to resolve
   // 💰 right around here, you'll probably notice you get an error log in the
