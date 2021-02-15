@@ -72,5 +72,5 @@ test(`logging in displays the user's username`, async () => {
 
   await waitForElementToBeRemoved(() => screen.getByLabelText(/loading/i))
 
-  expect(screen.getByText(username)).toBeDefined()
+  expect(screen.getByText(username)).toBeInTheDocument()
 })
